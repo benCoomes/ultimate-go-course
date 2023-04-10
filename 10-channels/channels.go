@@ -8,7 +8,9 @@ import (
 
 func main() {
 	//waitForResult()
-	fanOut()
+	//fanOut()
+	//waitForTask()
+	pooling()
 }
 
 func waitForResult() {
@@ -52,6 +54,50 @@ func fanOut() {
 
 	time.Sleep(time.Second)
 	fmt.Println("-------------------------")
+}
+
+func waitForTask() {
+	// this pattern is useful for sending work to a pool for workers
+
+	ch := make(chan string)
+
+	go func() {
+		w := <-ch
+		fmt.Println("worker : got signal : ", w)
+	}()
+
+	time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
+	ch <- "work"
+	fmt.Println("manager :  sent signal")
+
+	time.Sleep(time.Second)
+	fmt.Println("--------------------------")
+}
+
+func pooling() {
+	workers := 4
+	ch := make(chan string)
+
+	for i := 0; i < workers; i++ {
+		go func(wid int) {
+			for w := range ch {
+				fmt.Println("worker", wid, ": got signal :", w)
+				time.Sleep(time.Duration(rand.Intn(200)) * time.Millisecond)
+			}
+			fmt.Println("worker", wid, "stopping...")
+		}(i)
+	}
+
+	for i := 0; i < 20; i++ {
+		ch <- fmt.Sprint("work ", i)
+		fmt.Println("manager :  sent signal")
+	}
+
+	close(ch)
+	fmt.Println("manager :  closed channel")
+
+	time.Sleep(time.Second)
+	fmt.Println("--------------------------")
 }
 
 // Important questions:
