@@ -7,7 +7,8 @@ import (
 )
 
 func main() {
-	waitForResult()
+	//waitForResult()
+	fanOut()
 }
 
 func waitForResult() {
@@ -26,6 +27,31 @@ func waitForResult() {
 
 	time.Sleep(time.Duration(100) * time.Millisecond)
 	fmt.Println("------------------------------")
+}
+
+func fanOut() {
+	// fan out patterns are dangerous because they can create a lot of load
+	// for system running go program and/or external systems
+	works := 2000
+	ch := make(chan string, works)
+
+	for w := 0; w < works; w++ {
+		go func(work int) {
+			time.Sleep(time.Duration(rand.Intn(200)) * time.Millisecond)
+			ch <- "paper"
+			fmt.Println("worker : sent signal :", work)
+		}(w)
+	}
+
+	for works > 0 {
+		w := <-ch
+		works--
+		fmt.Println(w)
+		fmt.Println("manager : got signal : ", works)
+	}
+
+	time.Sleep(time.Second)
+	fmt.Println("-------------------------")
 }
 
 // Important questions:
