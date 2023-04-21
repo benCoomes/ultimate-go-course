@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"runtime"
 	"time"
 )
 
@@ -10,7 +11,8 @@ func main() {
 	//waitForResult()
 	//fanOut()
 	//waitForTask()
-	pooling()
+	//pooling()
+	fanoutSemaphore()
 }
 
 func waitForResult() {
@@ -98,6 +100,36 @@ func pooling() {
 
 	time.Sleep(time.Second)
 	fmt.Println("--------------------------")
+}
+
+func fanoutSemaphore() {
+	// this pattern is helpful for scheduling a lot of work at once,
+	// but limiting how much of a limited resource is used at a time (ex: database connections)
+	fmt.Println("doing it!")
+
+	jobs := 200
+	ch := make(chan string, jobs)
+
+	g := runtime.NumCPU()
+	sem := make(chan bool, g)
+
+	for j := 0; j < jobs; j++ {
+		go func(job int) {
+			sem <- true // sending on this channel will block once buffer is full
+			{
+				time.Sleep(time.Duration(rand.Intn(200)) * time.Millisecond)
+				ch <- fmt.Sprint(job)
+				fmt.Println("worker: finished job :", job)
+			}
+			<-sem // read from channel to decrement semaphore
+		}(j)
+	}
+
+	for jobs > 0 {
+		j := <-ch
+		jobs--
+		fmt.Println("recieved job: ", j, "remaining: ", jobs)
+	}
 }
 
 // Important questions:
