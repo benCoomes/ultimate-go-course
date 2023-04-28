@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -12,7 +13,8 @@ func main() {
 	//fanOut()
 	//waitForTask()
 	//pooling()
-	fanoutSemaphore()
+	//fanoutSemaphore()
+	fanoutBounded()
 }
 
 func waitForResult() {
@@ -105,8 +107,6 @@ func pooling() {
 func fanoutSemaphore() {
 	// this pattern is helpful for scheduling a lot of work at once,
 	// but limiting how much of a limited resource is used at a time (ex: database connections)
-	fmt.Println("doing it!")
-
 	jobs := 200
 	ch := make(chan string, jobs)
 
@@ -130,6 +130,32 @@ func fanoutSemaphore() {
 		jobs--
 		fmt.Println("recieved job: ", j, "remaining: ", jobs)
 	}
+}
+
+func fanoutBounded() {
+	// when you don't want to limit then number of go routines to handle some work
+	work := []string{"paper", "paper", "paper", "paper", 2000: "paper"}
+	g := runtime.NumCPU()
+	var wg sync.WaitGroup
+	wg.Add(g)
+
+	ch := make(chan string, g)
+
+	for w := 0; w < g; w++ {
+		go func(worker int) {
+			defer wg.Done()
+			for p := range ch {
+				fmt.Printf("worker %d recieved signal: %s\n", worker, p)
+			}
+			fmt.Printf("worker %d recieved shutdown signal\n", worker)
+		}(w)
+	}
+
+	for _, wrk := range work {
+		ch <- wrk
+	}
+	close(ch)
+	wg.Wait()
 }
 
 // Important questions:
