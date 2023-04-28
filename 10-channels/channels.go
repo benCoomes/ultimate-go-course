@@ -14,7 +14,8 @@ func main() {
 	//waitForTask()
 	//pooling()
 	//fanoutSemaphore()
-	fanoutBounded()
+	//fanoutBounded()
+	dropBounded()
 }
 
 func waitForResult() {
@@ -156,6 +157,34 @@ func fanoutBounded() {
 	}
 	close(ch)
 	wg.Wait()
+}
+
+func dropBounded() {
+	const cap = 100
+	ch := make(chan string, cap)
+
+	go func() {
+		for p := range ch {
+			fmt.Println("worker recieved signal: ", p)
+		}
+	}()
+
+	const work = 2000
+	for w := 0; w < work; w++ {
+		// if the channel is full, goes to the default case
+		select {
+		case ch <- fmt.Sprint(w):
+			fmt.Println("sent work: ", w)
+		default:
+			fmt.Println("dropped work: ", w)
+		}
+	}
+
+	close(ch)
+	fmt.Println("sent shutdown signal")
+
+	time.Sleep(time.Second)
+	fmt.Println("-------------------------------")
 }
 
 // Important questions:
