@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"runtime"
@@ -15,7 +16,8 @@ func main() {
 	//pooling()
 	//fanoutSemaphore()
 	//fanoutBounded()
-	dropBounded()
+	//dropBounded()
+	cancellation()
 }
 
 func waitForResult() {
@@ -185,6 +187,71 @@ func dropBounded() {
 
 	time.Sleep(time.Second)
 	fmt.Println("-------------------------------")
+}
+
+func cancellation() {
+	duration := 100 * time.Millisecond
+	ctx, cancel := context.WithTimeout(context.Background(), duration)
+
+	// always important to call cancel at least once, otherwise memory is leaked.
+	// cancel is okay to call more than once.
+	defer cancel()
+
+	ch := make(chan string, 1)
+
+	go func() {
+		time.Sleep(time.Duration(rand.Intn(200)) * time.Millisecond)
+		ch <- "work"
+	}()
+
+	select {
+	case w := <-ch:
+		fmt.Println("work complete: ", w)
+	case <-ctx.Done():
+		fmt.Println("work cancelled")
+	}
+
+	time.Sleep(time.Millisecond * 300)
+	fmt.Println("-----------------------------")
+}
+
+func cancellationBug() {
+	// *************************************************************************
+	// This method is similar to the one above, but has a bug - can you find it?
+	// *************************************************************************
+
+	duration := 100 * time.Millisecond
+	ctx, cancel := context.WithTimeout(context.Background(), duration)
+
+	// always important to call cancel at least once, otherwise memory is leaked.
+	// cancel is okay to call more than once.
+	defer cancel()
+
+	ch := make(chan string)
+
+	go func() {
+		time.Sleep(time.Duration(rand.Intn(200)) * time.Millisecond)
+		ch <- "work"
+	}()
+
+	select {
+	case w := <-ch:
+		fmt.Println("work complete: ", w)
+	case <-ctx.Done():
+		fmt.Println("work cancelled")
+	}
+
+	time.Sleep(time.Millisecond * 300)
+	fmt.Println("-----------------------------")
+
+	// *************************************************************************
+	// Answer: the channel is unbuffered, so sends block until a recieve is ready.
+	// In the case where <-ctx.Done() signals before <-ch, the main go routine moves on
+	// and stops waiting to recieve from ch. When the other go routine tries to send on
+	// ch, there will be no receivers and the goroutine will get stuck!
+	// So, always make sure that work run in a goroutine doesn't get blocked sending to channels,
+	// even if other goroutines have given up waiting on results from the channel.
+	// *************************************************************************
 }
 
 // Important questions:
