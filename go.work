@@ -1,6 +1,7 @@
 go 1.20
 
 use (
+	./01-memory-and-data-semantics/constants
 	./01-memory-and-data-semantics/escape
 	./01-memory-and-data-semantics/pointers
 	./01-memory-and-data-semantics/structs
