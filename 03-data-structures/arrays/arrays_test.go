@@ -53,3 +53,7 @@ func BenchmarkColTraveral(b *testing.B) {
 func TestSemanticsDemo(t *testing.T) {
 	SemanticsDemo()
 }
+
+func TestRangeDemo(t *testing.T) {
+	RangeDemo()
+}

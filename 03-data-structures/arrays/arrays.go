@@ -93,3 +93,32 @@ func SemanticsDemo() {
 		fmt.Println(i, num)
 	}
 }
+
+func RangeDemo() {
+	fmt.Println("-- Using index range --")
+	friends := [5]string{"Annie", "Bethesda", "Charlie", "Dylan", "Edmund"}
+	fmt.Printf("Before: %s\n", friends[1])
+
+	for i := range friends {
+		friends[1] = "Bilbo"
+
+		if i == 1 {
+			fmt.Printf("After: %s\n", friends[1])
+		}
+	}
+
+	fmt.Println("-- Using index and value range --")
+	friends = [5]string{"Annie", "Bethesda", "Charlie", "Dylan", "Edmund"}
+	fmt.Printf("Before: %s\n", friends[1])
+	for i, v := range friends {
+		friends[1] = "Butter"
+
+		if i == 1 {
+			// we are iterating over a copy of friends!
+			// Even though the value at 1 has changed,
+			// v is still the original value ('Bethesda')
+			fmt.Printf("After (index): %s\n", friends[1])
+			fmt.Printf("After (value): %s\n", v)
+		}
+	}
+}
