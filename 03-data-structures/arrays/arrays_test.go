@@ -49,3 +49,7 @@ func BenchmarkColTraveral(b *testing.B) {
 
 	fa = a
 }
+
+func TestSemanticsDemo(t *testing.T) {
+	SemanticsDemo()
+}

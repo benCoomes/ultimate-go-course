@@ -1,5 +1,7 @@
 package arrays
 
+import "fmt"
+
 const (
 	rows = 2 * 1024
 	cols = 2 * 1024
@@ -71,4 +73,23 @@ func ColTraversal() int {
 		}
 	}
 	return count
+}
+
+func SemanticsDemo() {
+	var fruits [5]string
+	fruits[0] = "apple"
+	fruits[1] = "banana"
+	fruits[2] = "orange"
+	fruits[3] = "grape"
+	fruits[4] = "plum"
+
+	for i, fruit := range fruits {
+		fmt.Println(i, fruit)
+	}
+
+	nums := [5]int{1, 2, 3, 4, 5}
+
+	for i, num := range nums {
+		fmt.Println(i, num)
+	}
 }
