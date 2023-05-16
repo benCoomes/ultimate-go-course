@@ -6,6 +6,7 @@ use (
 	./01-memory-and-data-semantics/pointers
 	./01-memory-and-data-semantics/structs
 	./03-data-structures/arrays
+	./03-data-structures/slices
 	./08-goroutines
 	./09-data-races
 	./10-channels
