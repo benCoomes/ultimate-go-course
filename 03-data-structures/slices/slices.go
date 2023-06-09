@@ -57,6 +57,32 @@ func AppendDemo() {
 	}
 }
 
+func CopyDemo() {
+	slice1 := []int{1, 2}
+	slice1 = append(slice1, 3)
+
+	slice2 := []int{91, 92, 93, 94}
+	slice2 = append(slice2, 95)
+
+	fmt.Println(slice1)
+	fmt.Println(len(slice1))
+	fmt.Println(cap(slice1))
+
+	fmt.Println(slice2)
+	fmt.Println(len(slice2))
+	fmt.Println(cap(slice2))
+
+	size := len(slice1) + len(slice2)
+	slice3 := make([]int, size)
+
+	count := copy(slice3, slice1)
+	copy(slice3[count:], slice2)
+
+	fmt.Println(slice3)
+	fmt.Println(len(slice3))
+	fmt.Println(cap(slice3))
+}
+
 func inspectSlice(slice []string) {
 	fmt.Printf("Length[%d], Capacity[%d]\n", len(slice), cap(slice))
 	for i, s := range slice {

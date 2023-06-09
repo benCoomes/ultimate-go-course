@@ -8,3 +8,6 @@ func TestSlicesDemo(t *testing.T) {
 func TestAppendDemo(t *testing.T) {
 	AppendDemo()
 }
+func TestCopyDemo(t *testing.T) {
+	CopyDemo()
+}
