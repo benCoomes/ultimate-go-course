@@ -17,14 +17,19 @@ func main() {
 	//fanoutSemaphore()
 	//fanoutBounded()
 	//dropBounded()
-	cancellation()
+	//cancellation()
+
+	value := 2
+	res, err := fanoutFirstResult(value)
+	fmt.Printf("fanoutFirstResult %d: %v, %v\n", value, res, err)
+	time.Sleep(8 * time.Second) // wait for cleanup to prove it happens
 }
 
 func waitForResult() {
 	ch := make(chan string) // unbuffered channel that signals with string data
 
 	go func() {
-		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
+		time.Sleep(time.Duration(1000) * time.Millisecond)
 		ch <- "paper"
 		fmt.Println("worker: sent signal")
 	}()
@@ -187,6 +192,85 @@ func dropBounded() {
 
 	time.Sleep(time.Second)
 	fmt.Println("-------------------------------")
+}
+
+func fanoutFirstResult(userID int) (bool, error) {
+	// return as soon as first 'true' result is received
+	// return an error, if any, but only after all workers done
+	// make sure any created channels are closed
+	ctxCancel, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	rc := make(chan bool, 1)
+	ec := make(chan error, 1)
+	wg := sync.WaitGroup{}
+
+	batchCount := 10
+	for i := 0; i < batchCount; i++ {
+		wg.Add(1)
+		go func(batch []int) {
+			defer wg.Done()
+
+			if ctxCancel.Err() != nil {
+				return
+			}
+			hasAbility, err := slowQuery(ctxCancel, userID, batch)
+			if err != nil {
+				select {
+				case <-ctxCancel.Done():
+				case ec <- err:
+				}
+			} else {
+				select {
+				case <-ctxCancel.Done():
+				case rc <- hasAbility:
+				}
+			}
+		}([]int{i})
+	}
+
+	go func() {
+		wg.Wait()
+		close(rc)
+		close(ec)
+		fmt.Printf("all cleaned up!\n")
+	}()
+
+	var err error
+	for i := 0; i < batchCount; i++ {
+		select {
+		case result := <-rc:
+			if result {
+				return true, nil
+			}
+		case e := <-ec:
+			err = e
+		}
+	}
+	return false, err
+}
+
+func slowQuery(ctx context.Context, userID int, orgIDs []int) (bool, error) {
+	if ctx.Err() != nil {
+		return false, ctx.Err()
+	}
+
+	for _, oid := range orgIDs {
+
+		if oid%2 == 0 {
+			time.Sleep(time.Duration(oid) * time.Second)
+		}
+
+		if userID == oid {
+			return true, nil
+		}
+
+		if userID == oid*10_000 {
+			return false, fmt.Errorf("userID is really big")
+		}
+	}
+
+	return false, nil
 }
 
 func cancellation() {
